@@ -13,3 +13,9 @@ Invoke-WebRequest -Uri "https://files.grouplens.org/datasets/movielens/ml-32m.zi
 ```powershell
 Expand-Archive -Path ".\ml-32m.zip" -DestinationPath .
 ```
+
+O también (en Linux):
+
+```bash
+curl "https://files.grouplens.org/datasets/movielens/ml-32m.zip" --output "ml-32m.zip" && unzip ml-32m.zip
+```
