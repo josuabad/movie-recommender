@@ -1,0 +1,20 @@
+services:
+  python-app:
+    image: python:3.14-slim
+    # container_name: python3.14_env
+    working_dir: /app
+    volumes:
+      - .:/app
+      - pip_cache:/root/.cache/pip
+    environment:
+      - PIP_CACHE_DIR=/root/.cache/pip
+    command: ["tail", "-f", "/dev/null"]
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "6.0"
+    #       memory: 12G
+
+volumes:
+  pip_cache:
+    driver: local
