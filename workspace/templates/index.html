@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recomendador de Películas</title>
+    <!-- Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-2xl w-full bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
+        <h1 class="text-3xl font-bold text-center mb-2 text-indigo-400">🍿 MovieLens Recommender</h1>
+        <p class="text-slate-400 text-center mb-6 text-sm">Sistema de recomendación basado en NMF (Factorización de
+            Matrices No Negativas)</p>
+
+        <!-- Formulario -->
+        <form id="recommend-form" class="flex flex-col sm:flex-row gap-3 mb-8">
+            <input type="text" id="movie-input" list="movies-list" placeholder="Escribe una película (ej: Star Wars)..."
+                required
+                class="flex-1 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:border-indigo-500 text-white placeholder-slate-500">
+            <!-- Autocompletado nativo -->
+            <datalist id="movies-list">
+                {% for t in available_titles %}
+                <option value="{{ t }}">
+                    {% endfor %}
+            </datalist>
+
+            <button type="submit"
+                class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 transition font-semibold rounded-xl shadow-lg flex items-center justify-center">
+                Buscar
+            </button>
+        </form>
+
+        <!-- Spinner de carga -->
+        <div id="loading" class="hidden text-center py-6 text-indigo-400 font-medium">
+            Buscando las mejores recomendaciones...
+        </div>
+
+        <!-- Mensaje de Error -->
+        <div id="error-msg" class="hidden bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-xl mb-6 text-sm">
+        </div>
+
+        <!-- Resultados -->
+        <div id="results" class="hidden space-y-4">
+            <h2 class="text-lg font-semibold text-slate-300">
+                Recomendaciones para: <span id="target-movie" class="text-indigo-400"></span>
+            </h2>
+            <ul id="recommendations-list" class="space-y-2"></ul>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('recommend-form');
+        const input = document.getElementById('movie-input');
+        const resultsDiv = document.getElementById('results');
+        const targetMovieSpan = document.getElementById('target-movie');
+        const list = document.getElementById('recommendations-list');
+        const loadingDiv = document.getElementById('loading');
+        const errorDiv = document.getElementById('error-msg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const movieTitle = input.value.trim();
+            if (!movieTitle) return;
+
+            // Resetear estados UI
+            resultsDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            loadingDiv.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`/api/recommend?title=${encodeURIComponent(movieTitle)}&top_n=5`);
+                const data = await response.json();
+
+                loadingDiv.classList.add('hidden');
+
+                if (!response.ok) {
+                    errorDiv.textContent = data.detail || 'Ocurrió un error inesperado.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                // Renderizar resultados
+                targetMovieSpan.textContent = data.query;
+                list.innerHTML = '';
+
+                data.recommendations.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between p-3 bg-slate-900/60 rounded-lg border border-slate-700/50 hover:border-slate-600 transition';
+                    li.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xs font-bold w-6 h-6 rounded-full bg-indigo-900 text-indigo-300 flex items-center justify-center">${index + 1}</span>
+                            <span class="text-sm font-medium text-slate-200">${item.title}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-bold text-emerald-400">${item.percentage}</span>
+                            <span class="text-[10px] block text-slate-500">similitud</span>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+
+                resultsDiv.classList.remove('hidden');
+
+            } catch (err) {
+                loadingDiv.classList.add('hidden');
+                errorDiv.textContent = 'Error de conexión con el servidor.';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+
+</html>

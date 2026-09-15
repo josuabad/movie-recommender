@@ -3,6 +3,8 @@ services:
     image: python:3.14-slim
     # container_name: python3.14_env
     working_dir: /app
+    ports:
+      - "8000:8000"
     volumes:
       - .:/app
       - pip_cache:/root/.cache/pip
